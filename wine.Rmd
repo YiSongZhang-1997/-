@@ -1,0 +1,524 @@
+---
+output: html_document
+---
+红酒数据集探索 by 张逸松
+========================================================
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# 加载你最终使用的所有组件
+# 在这个代码块的分析中。
+# 注意，在这个代码块中，将参数 "echo" 设为假。
+# This prevents the code from displaying in the knitted HTML output.这可以避免代
+# 码混入 HTML 输出显示。
+# 应当在文件中，对所有代码块设为 echo=FALSE 。
+library(ggplot2)
+library(GGally)
+library(RColorBrewer)
+                                                                                
+```
+
+```{r echo=FALSE, Load_the_Data}
+# 加载数据
+wine <- read.csv('wineQualityReds.csv')
+```
+
+这个报告探索了一个包含大约1600种红酒和相关化学成分的属性，并相应被专家评分的数据集。
+
+# 单变量绘图选择
+```{r echo=FALSE, Univariate_Plots}
+# 查看数据集的基本情况
+dim(wine)
+str(wine)
+summary(wine)
+```
+
+```{r echo=FALSE}
+# quality应该被当作分类变量
+
+wine$quality <- factor(wine$quality)
+
+str(wine)
+```
+
+这个数据集有1599个观察对象，12个变量。
+
+```{r echo=FALSE, warning=FALSE}
+# 关于质量的直方图
+ggplot(aes(x = quality), data = wine) +
+  geom_histogram(stat = "count") +
+  labs(x = "quality levels")
+
+```
+
+quality的直方图是正态分布，大多数红酒的评分都在5，6分。
+
+```{r echo=FALSE}
+#关于fixed.acidity的直方图
+ggplot(aes(x = fixed.acidity), data = wine) +
+  geom_histogram(binwidth = 0.5) +
+  labs(x = "fixed acidity (g / dm^3)")
+```
+
+fixed acidity的分布接近正态分布。
+
+```{r echo=FALSE}
+#关于挥发性酸度的直方图
+ggplot(aes(x = volatile.acidity), data = wine) +
+  geom_histogram(binwidth = 0.01) +
+  labs(x = "volatile acidity (g / dm^3)")
+```
+
+volatile acidity太高的话会导致葡萄酒有不好的酸的口感，可以从图中看出来大多数的葡萄酒都处于正常的范围，只有一小部分的值偏高。
+
+```{r echo=FALSE}
+#关于柠檬酸的直方图
+ggplot(aes(x = citric.acid), data = wine) +
+  geom_histogram(binwidth = 0.01) +
+  labs(x = "citric acid (g / dm^3)")
+```
+
+citric acid 可以增加葡萄酒的新鲜口感，可以看到有两个双峰结构，第一个在0左右，第二个在0.5左右，我猜测是因为葡萄酒的档次问题，分布在0左右的可能价格较低，在0.5左右的葡萄酒属于高档酒，价格较高。
+
+```{r echo=FALSE}
+#关于残余糖分的直方图
+wine$residual.sugar[wine$residual.sugar < 1]
+wine$residual.sugar[wine$residual.sugar > 45]
+ggplot(aes(x = residual.sugar), data = wine) +
+  geom_histogram(binwidth = 0.1) +
+  labs(x = "residual sugar (g / dm^3)")
+```
+
+可以看到residual sugar在0到4的分布近似正太分布，后面的数据比较稀少，零散的分布在长尾上面。只有2种红酒的residual sugar小于1，没有大于45的红酒，也就是说在这个数据集里面没有红酒是甜的。
+
+```{r echo=FALSE}
+#关于氯化物的直方图
+ggplot(aes(x = chlorides), data = wine) +
+  geom_histogram(binwidth = 0.005) +
+  labs(x = "chlorides (g / dm^3)")
+```
+
+可以看到chlorids在0到0.2的分布近似正太分布，后面的数据比较稀少，零散的分布在长尾上面。
+
+```{r echo=FALSE,  message=FALSE}
+#关于free.sulfur.dioxide的直方图
+ggplot(aes(x = free.sulfur.dioxide), data = wine) +
+  geom_histogram() +
+  labs(x = "free sulfur dioxide (mg / dm^3)")
+```
+
+可以看到这幅图是偏向右偏态的，free sulfur dioxide可以防止微生物的生长和葡萄酒的氧化。
+
+```{r echo=FALSE}
+#关于total.sulfur.dioxide的直方图
+ggplot(aes(x = total.sulfur.dioxide), data = wine) +
+  geom_histogram(binwidth = 1) +
+  labs(x = "total sulfur dioxide (mg / dm^3)")
+```
+
+total sulfur dioxide的分布偏右偏态，有个别的值分散在很远处。
+
+```{r echo=FALSE,  message=FALSE}
+#关于密度的直方图
+ggplot(aes(x = density), data = wine) +
+  geom_histogram() +
+  labs(x = "density (g / cm^3)")
+```
+
+density的分布偏正态分布。
+
+```{r echo=FALSE,  message=FALSE}
+#关于酸度的直方图
+ggplot(aes(x = pH), data = wine) +
+  geom_histogram() 
+```
+
+pH属于正态分布。虽然说大多数葡萄酒的酸度都处在3到4之间，但是我们的数据集整体酸度明显偏酸一些。接近4的酸度数量的葡萄酒明显较少。
+
+```{r echo=FALSE,  message=FALSE}
+#硫酸盐的直方图
+ggplot(aes(x = sulphates), data = wine) +
+  geom_histogram() +
+  labs(x = "sulphates (g / dm3)")
+```
+
+这个属于右偏态。看似觉得sulphates的含量都处在较少的含量，有少部分葡萄酒会把含量提高。
+
+```{r echo=FALSE,  message=FALSE}
+#酒精含量的直方图
+ggplot(aes(x = alcohol), data = wine) +
+  geom_histogram() +
+  labs(x = "alcohol (% by volume)")
+```
+
+alcohol的分布也是右偏态。酒精含量越高的看似越少。
+
+# 单变量分析
+
+### 你的数据集结构是什么？
+
+这个数据集有1599种红酒，有12个特性。
+
+### 你的数据集内感兴趣的主要特性有哪些？
+
+我对quality这个特性比较感兴趣，我想探究哪些特性与quality存在相关性。
+
+### 你认为数据集内哪些其他特征可以帮助你探索兴趣特点？
+
+volatile acidity，citric acid，residual sugar，free sulfur dioxide，sulphates，pH, density, 这几个特性都能帮助我进入深度探索。这些特性都有着影响葡萄酒口感和质量的关联。
+
+### 根据数据集内已有变量，你是否创建了任何新变量？
+
+我没有创建新的变量。
+
+### 在已经探究的特性中，是否存在任何异常分布？你是否对数据进行一些操作，如清洁、调整或改变数据的形式？如果是，你为什么会这样做？
+
+在特性citric acid中我发现了一个双峰结构的分布，我没有操作和修改数据，我猜测是因为葡萄酒的档次问题，分布在0左右的可能价格较低，在0.5左右的葡萄酒属于高档酒，价格较高。在这个数据集里面，quality应该是分类变量，我把它转换成分类变量的属性了。
+
+# 双变量绘图选择
+```{r echo=FALSE, fig.height=11, fig.width=11, message=FALSE, warning=FALSE}
+# 筛选出需要分析的变量并作出相应的绘图矩阵
+myvars <- names(wine) %in% c("fixed.acidity", "chlorides", 
+                             "total.sulfur.dioxide") 
+wine2 <- wine[!myvars]
+ggpairs(wine2,
+        upper = list(continuous = wrap("cor", size = 3), combo = "box_no_facet"),
+        lower = list(continuous = wrap('points', size = 0.1, alpha = 0.3)),
+         diag = list(continuous = "densityDiag")) 
+```
+
+```{r echo=FALSE}
+#酒精含量与不同的质量类型的酒的箱线图和散点图，分析其相关性
+
+ggplot(aes(x = quality, y = alcohol), data = wine) +
+  geom_boxplot(alpha = 0.1, color = 'blue') +
+  geom_jitter(alpha = 0.1, size = 1) +
+  stat_summary(fun.y = 'mean', geom = 'point', color = 'red') +
+  labs(x = "quality levels",
+       y = "alcohol (% by volume)")
+
+```
+
+可以看到，酒的质量越高，酒精含量度的均值水平也在显著上升。
+
+```{r echo=FALSE}
+#硫酸盐含量与不同的质量类型的酒的箱线图和散点图，分析其相关性
+ggplot(aes(x = quality, y = sulphates), data = wine) +
+  geom_boxplot(alpha = 0.1, color = 'blue') +
+  geom_jitter(alpha = 0.1, size = 1) +
+  stat_summary(fun.y = 'mean', geom = 'point', color = 'red') +
+  labs(x = "quality levels",
+       y = "sulphates (g / dm3)")
+```
+
+可以看到，随着酒质量的提高，硫酸盐也有轻微的上升趋势。
+
+```{r echo=FALSE}
+#酸度与不同的质量类型的酒的箱线图和散点图，分析其相关性
+ggplot(aes(x = quality, y = pH), data = wine) +
+  geom_boxplot(alpha = 0.1, color = 'blue') +
+  geom_jitter(alpha = 0.1, size = 1) +
+  stat_summary(fun.y = 'mean', geom = 'point', color = 'red') +
+  labs(x = "quality levels",
+       y = "pH")
+```
+
+从图中可以看出，pH值和quality几乎没有相关性。
+
+```{r echo=FALSE}
+#free sulfur dioxide与不同的质量类型的酒的箱线图和散点图，分析其相关性
+ggplot(aes(x = quality, y = free.sulfur.dioxide), data = wine) +
+  geom_boxplot(alpha = 0.1, color = 'blue') +
+  geom_jitter(alpha = 0.1, size = 1) +
+  stat_summary(fun.y = 'mean', geom = 'point', color = 'red') +
+  labs(x = "quality levels",
+       y = "free sulfur dioxide (mg / dm^3)")
+```
+
+可以看出，free sulfur dioxide与quality几乎没有相关性。
+
+```{r echo=FALSE}
+#残余糖量与不同的质量类型的酒的箱线图和散点图，分析其相关性
+ggplot(aes(x = quality, y = residual.sugar), data = wine) +
+  geom_boxplot(alpha = 0.1, color = 'blue') +
+  geom_jitter(alpha = 0.1, size = 1) +
+  stat_summary(fun.y = 'mean', geom = 'point', color = 'red') +
+  labs(x = "quality levels",
+       y = "residual sugar (g / dm^3)")
+```
+
+可以看出，residual sugar与quality几乎没有相关性。
+
+```{r echo=FALSE}
+#柠檬酸量与不同的质量类型的酒的箱线图和散点图，分析其相关性
+ggplot(aes(x = quality, y = citric.acid), data = wine) +
+  geom_boxplot(alpha = 0.1, color = 'blue') +
+  geom_jitter(alpha = 0.1, size = 1) +
+  stat_summary(fun.y = 'mean', geom = 'point', color = 'red') +
+  labs(x = "quality levels",
+       y = "citric acid (g / dm^3)")
+```
+
+可以从曲线看出，柠檬酸越高，质量也有提高，这可能与柠檬酸可提高酒的口味新鲜感有关。
+
+```{r echo=FALSE}
+
+#挥发性酸度与不同的质量类型的酒的箱线图和散点图，分析其相关性
+ggplot(aes(x = quality, y = volatile.acidity), data = wine) +
+  geom_boxplot(alpha = 0.1, color = 'blue') +
+  geom_jitter(alpha = 0.1, size = 1) +
+  stat_summary(fun.y = 'mean', geom = 'point', color = 'red') +
+  labs(x = "quality levels",
+       y = "volatile acidity (g / dm^3)")
+```
+
+可以看出曲线呈下降趋势，也就是说volatile acidity越高，酒的质量越差，这应该与volatile acidity过高会让酒的酸味口感变差有关。
+
+```{r echo=FALSE,  message=FALSE}
+#酸度与柠檬酸的散点图，分析其相关性
+ggplot(aes(x = pH, y = citric.acid), data = wine) +
+  geom_point(alpha = 0.3) +
+  geom_smooth()
+```
+
+可以看到，随着pH值越来越高，柠檬酸的含量是越来越少的，也就是说，酸度越高，柠檬酸一般就越多。
+
+```{r echo=FALSE}
+#密度与不同的质量类型的酒的箱线图和散点图，分析其相关性
+ggplot(aes(x = quality, y = density), data = wine) +
+  geom_boxplot(alpha = 0.1, color = 'blue') +
+  geom_jitter(alpha = 0.1, size = 1) +
+  stat_summary(fun.y = 'mean', geom = 'point', color = 'red') +
+  labs(x = "quality levels",
+       y = "density (g / cm^3)")
+```
+
+可以看到密度和质量呈轻微负相关性。
+
+# 双变量分析
+
+### 探讨你在这部分探究中观察到的一些关系。这些感兴趣的特性与数据集内其他特性有什么区别？
+
+我发现了酒精含量越高，酒的评分也越高一些。
+硫酸盐的含量越高，酒的评分也越高。相关性较小。我想是因为硫酸盐起到了抗菌和抗氧化的作用，对酒的质量有提高效果。
+柠檬酸含量越高，酒的评分也呈微微上升趋势。相关性很小。我觉得是因为柠檬酸会提高酒新鲜口感的性质发挥了作用。
+挥发性酸度越高，酒的质量越低。它们的负相关性一般。我觉得是因为挥发性酸度变高会让酒的口感变差，所有是有负相关性。
+
+### 你是否观察到主要特性与其他特性之间的有趣关系？
+
+随着pH值越来越高，柠檬酸的含量是越来越少的，也就是说，酸度越高，柠檬酸一般就越多。我觉得可能是因为它们都是酸的化学属性这一原因。
+
+### 你发现最强的关系是什么？
+
+我发现的最强关系是酒精和质量。
+
+# 多变量绘图选择
+
+```{r echo=FALSE, Multivariate_Plots}
+#按质量分类，探索密度和酒精的相关性
+ggplot(aes(x = density, y = alcohol, color = quality), data = wine) +
+  geom_jitter() +
+  scale_color_brewer(type = 'div', palette = "PuOr") +
+  theme_dark() +
+  labs(x = "density (g / cm^3)",
+       y = "alcohol (% by volume)") 
+```
+
+可以看出，在所有酒里面，密度越高酒精越少的趋势，大多数评分较低的酒的酒精含量都偏少，而质量较高的酒酒精含量都偏高一些。
+
+```{r echo=FALSE}
+#按质量分类，探索酸度和酒精的相关性
+ggplot(aes(x = pH, y = alcohol, color = quality), data = wine) +
+  geom_jitter() +
+  scale_color_brewer(type = 'div', palette = "PuOr") +
+  theme_dark() +
+  labs(x = "pH",
+       y = "alcohol (% by volume)")
+```
+
+可以看到，评分较低的酒酒精含量偏低。而评分高的酒酒精都偏高，并且它们的酸度与酒精的负相关性要比评分低的酒强。
+
+```{r echo=FALSE}
+#按质量分类，探索柠檬酸和酸度的相关性
+ggplot(aes(x = pH, y = citric.acid, color = quality), data = wine) +
+  geom_jitter() +
+  scale_color_brewer(type = 'div', palette = "PuOr") +
+  theme_dark() +
+  labs(x = "pH",
+       y = "citric acid (g / dm^3)")
+```
+
+这幅图可以看出，所有评分的酒中，酸度越低柠檬酸就越少。
+
+```{r echo=FALSE}
+#按质量分类，探索柠檬酸和密度的相关性
+ggplot(aes(x = density, y = citric.acid, color = quality), data = wine) +
+  geom_jitter() +
+  scale_color_brewer(type = 'div', palette = "PuOr") +
+  theme_dark() +
+  labs(x = "density (g / cm^3)",
+       y = "citric acid (g / dm^3)")
+```
+
+可以看到，在所有酒里面，密度和柠檬酸呈正相关性，但是评分较低的酒的密度相比评分较高的酒密度要高。
+
+```{r echo=FALSE}
+#按质量分类，探索柠檬酸和酒精的相关性
+ggplot(aes(x = alcohol, y = citric.acid, color = quality), data = wine) +
+  geom_jitter() +
+  scale_color_brewer(type = 'div', palette = "PuOr") +
+  theme_dark() +
+  labs(x = "alcohol (% by volume)",
+       y = "citric acid (g / dm^3)")
+```
+
+可以看出，酒精与柠檬酸没有什么相关性，但是评分较高的酒，明显酒精含量比评分较低的酒要高。
+
+```{r echo=FALSE}
+#按质量分类，探索硫酸盐和酒精的相关性
+ggplot(aes(x = alcohol, y = sulphates, color = quality), data = wine) +
+  geom_jitter() +
+  scale_color_brewer(type = 'div', palette = "PuOr") +
+  theme_dark() +
+  labs(x = "alcohol (% by volume)",
+       y = "sulphates (g / dm3)") 
+```
+
+这幅图看不出酒精与硫酸盐的相关性，但是可以看出质量较高的酒酒精含量明显较评分低的酒要分布的更高。
+
+```{r echo=FALSE}
+#按质量分类，探索硫酸盐和酸度的相关性
+ggplot(aes(x = pH, y = sulphates, color = quality), data = wine) +
+  geom_jitter() +
+  scale_color_brewer(type = 'div', palette = "PuOr") +
+  coord_cartesian(xlim = c(3.0, 3.7)) +
+  theme_dark() +
+  labs(x = "pH",
+       y = "sulphates (g / dm3)") 
+```
+
+看不出酸度和硫酸盐的相关性，可以看出评分较低的酒的硫酸盐含量较评分高的酒分布的要低。
+
+```{r echo=FALSE}
+#按质量分类，探索硫酸盐和密度的相关性
+ggplot(aes(x = density, y = sulphates, color = quality), data = wine) +
+  geom_jitter() +
+  scale_color_brewer(type = 'div', palette = "PuOr") +
+  theme_dark() +
+  labs(x = "density (g / cm^3)",
+       y = "sulphates (g / dm3)") +
+  coord_cartesian(xlim = c(0.993, 1.000)) 
+```
+
+看不出密度和硫酸盐的相关性，但是可以看出评分较低的酒硫酸盐含量分布较评分高的酒要低。
+
+```{r echo=FALSE}
+#按质量分类，探索挥发性酸度和密度的相关性
+ggplot(aes(x = density, y = volatile.acidity, color = quality), data = wine) +
+  geom_jitter() +
+  scale_color_brewer(type = 'div', palette = "PuOr") +
+  theme_dark() +
+  labs(x = "density (g / cm^3)",
+       y = "volatile acidity (g / dm^3)") +
+  coord_cartesian(xlim = c(0.992, 1.001)) 
+```
+
+看不太出密度和挥发性酸度相关性，但是可以轻微的看出评分较低的酒里挥发性酸度值要比评分高的酒要高一些。
+
+```{r echo=FALSE} 
+#按质量分类，探索挥发性酸度和酸度的相关性
+ggplot(aes(x = pH, y = volatile.acidity, color = quality), data = wine) +
+  geom_jitter() +
+  scale_color_brewer(type = 'div', palette = "PuOr") +
+  theme_dark() +
+  labs(x = "pH",
+       y = "volatile acidity (g / dm^3)") +
+  coord_cartesian(xlim = c(2.9, 3.8))
+```
+
+可以看到，酸度和挥发性酸度呈轻微负相关性，质量较差的酒挥发性酸度相比质量较好的酒要高一些。
+
+```{r echo=FALSE}
+#按质量分类，探索挥发性酸度和酒精的相关性
+ggplot(aes(x = alcohol, y = volatile.acidity, color = quality), data = wine) +
+  geom_jitter() +
+  scale_color_brewer(type = 'div', palette = "PuOr") +
+  theme_dark() +
+  labs(x = "alcohol (% by volume)",
+       y = "volatile acidity (g / dm^3)") +
+  coord_cartesian(xlim = c(9, 13)) 
+```
+
+从图上面看不出酒精和挥发性酸度的相关性，但是可以看出质量较低的酒中酒精含量要比质量较高的酒要低。
+
+# 多变量分析
+
+###  探讨你在这部分探究中观察到的一些关系。通过观察感兴趣的特性，是否存在相互促进的特性？
+
+我发现了密度越高酒精越少的趋势，大多数评分较低的酒的酒精含量都偏少，而质量较高的酒酒精含量都偏高一些。
+评分高的酒的酸度与酒精的负相关性要比评分低的酒强。
+
+所有评分的酒中，酸度越低柠檬酸就越少。密度和柠檬酸呈正相关性，但是评分较低的酒的密度相比评分较高的酒密度要高。
+
+评分较低的酒的硫酸盐含量较评分高的酒分布的要低。我想是因为硫酸盐起到了抗微生物和抗氧化的作用。
+
+但是可以轻微的看出评分较低的酒里挥发性酸度值要比评分高的酒要高一些。我想是因为挥发性酸度会造成一种不好的口感，所以会降低评分。酸度和挥发性酸度呈轻微负相关性。
+
+### 这些特性之间是否存在有趣或惊人的联系呢？
+
+我发现不管在密度，酸度还是酒精含量分析里面，所有评分的酒都呈现了评分较低的酒的酒精含量都偏少，而质量较高的酒酒精含量都偏高一些的现象。这说明了不管因为什么原因，酒精含量高很可能会提高酒的质量。
+
+# 定稿图与总结
+
+### 绘图一
+```{r echo=FALSE,  warning=FALSE, Plot_One}
+#第一个总结图，质量的分布情况
+ggplot(aes(x = quality), data = wine) +
+  geom_histogram(stat = "count") +
+  labs(x = "quality levels",
+       title = "The distribution of Quality levels")
+```
+
+### 描述一
+
+可以看到，大多数红酒的评分都在5和6分之中。
+
+### 绘图二
+```{r echo=FALSE, Plot_Two}
+#第二个总结图，总结了酒精含量与不同的质量类型的酒的箱线图和散点图，和其相关性
+
+
+ggplot(aes(x = quality, y = alcohol), data = wine) +
+  geom_boxplot(alpha = 0.1, color = 'blue') +
+  geom_jitter(alpha = 0.1, size = 1) +
+  stat_summary(fun.y = 'mean', geom = 'point', color = 'red') +
+  labs(x = "quality levels",
+       y = "alcohol (% by volume)",
+       title = "Relationship of Quality levels and Alcohol")
+```
+
+### 描述二
+
+可以看到，酒的质量越高，酒精含量度的均值水平也在显著上升。
+
+### 绘图三
+```{r echo=FALSE, Plot_Three}
+#第三个总结图，按质量分类，总结了挥发性酸度，酸度和不同质量酒之间的相关性
+ggplot(aes(x = pH, y = volatile.acidity, color = quality), data = wine) +
+  geom_jitter() +
+  scale_color_brewer(type = 'div', palette = "PuOr") +
+  theme_dark() +
+  labs(x = "pH",
+       y = "volatile acidity (g / dm^3)",
+       title = "Relationship of pH and Volatile acidity by Quality") +
+  coord_cartesian(xlim = c(2.9, 3.8))
+```
+
+### 描述三
+
+可以看到，酸度越低，挥发性酸度越高的轻微趋势，质量较差的酒挥发性酸度相比质量较好的酒要高一些。我想是因为挥发性酸度会造成一种不好的口感，所以会降低评分。
+
+------
+
+# 反思
+
+在做这个项目期间，我忘记了一些作图和函数的用法，不过后来用？查了一些官方文档就会做了，说明在以后的工作当中学习看文档是很重要的技能，因为我不可能记住所有的编程知识。还有就是理解数据集，包括变量与变量之间的关系。对分析问题的思考很有帮助。刚开始我没有设置margin线，这个习惯影响了代码可读性，以后的编程工作中不光要注意代码的有效性也要注意可读性。在思考酸度这个变量的时候，我没有考虑到酸度数值越高其实是酸度越小这一个特性，后来我还要重新检查和更改一遍所有关于酸度的分析内容。以后的工作里要提前考虑到变量特殊性质的方面。不过在分析过程中我也成功的发现了影响了红酒质量的变量。这要归功于正确运用图表的分析。在第三幅总结图中，我把酒按质量做了分类，并且用散点图做出了酸度和挥发性酸度的关系。正确分析出了质量较差的酒挥发性酸度相比质量较好的酒要高一些，并且符合这一化学特性的现实意义。
